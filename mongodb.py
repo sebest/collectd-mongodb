@@ -1,26 +1,5 @@
 #
-# Plugin to check MongoDB
-#
-
-# Example configuration
-# <LoadPlugin python>
-#    Globals true
-# </LoadPlugin>
-#
-# <Plugin python>
-#   ModulePath "/usr/share/collectd/plugins/python"
-#   LogTraces true
-#   Interactive false
-#
-#   Import "mongodb"
-#   <Module mongodb>
-#     Host "127.0.0.1"
-#     Port 27017
-#     User "user"
-#     Password "password"
-#     Database "admin" "db-prod" "db-dev"
-#   </Module>
-# </Plugin>
+# Plugin to collectd statistics from MongoDB
 #
 
 import collectd
