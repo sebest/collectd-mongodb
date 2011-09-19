@@ -37,3 +37,5 @@ The following is an example Collectd configuration for this plugin:
             Database "admin" "db-prod" "db-dev"
         </Module>
     </Plugin>
+
+The data-sets in types.db need to be added to the types.db file given by the collectd.conf TypesDB directive. See the types.db(5) man page for more information.
