@@ -7,7 +7,7 @@ This plugin is a direct port of the MongoDB C plugin that will be part of collec
 # Requirements
 
 * Collectd 4.9 or later (for the Python plugin)
-* Python 2.6 or later (might work on 2.5 but not tested there)
+* Python 2.4 or later
 * Python MongoDB driver (https://github.com/mongodb/mongo-python-driver)
 
 # Configuration
