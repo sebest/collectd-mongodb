@@ -53,7 +53,10 @@ class MongoDB(object):
         # indexes
         accesses = server_status['indexCounters']['btree']['accesses']
         misses = server_status['indexCounters']['btree']['misses']
-        self.submit('cache_ratio', 'cache_misses', accesses / float(misses) if misses else 0)
+        if misses:
+            self.submit('cache_ratio', 'cache_misses', accesses / float(misses))
+        else:
+            self.submit('cache_ratio', 'cache_misses', 0)
 
         for mongo_db in self.mongo_db:
             db = con[mongo_db]
