@@ -16,6 +16,9 @@ class MongoDB(object):
         self.mongo_user = None
         self.mongo_password = None
 
+        self.lockTotalTime = None
+        self.lockTime = None
+
     def submit(self, type, instance, value, db=None):
         if db:
             plugin_instance = '%s-%s' % (self.mongo_port, db)
@@ -48,7 +51,19 @@ class MongoDB(object):
         self.submit('connections', 'connections', server_status['connections']['current'])
 
         # locks
-        self.submit('percent', 'lock_ratio', server_status['globalLock']['ratio'])
+        if self.lockTotalTime is not None and self.lockTime is not None:
+            #collectd.warning( "total %d - %d / %d - %d " % (server_status['globalLock']['totalTime'], self.lockTotalTime, server_status['globalLock']['totalTime'], self.lockTime))
+            if self.lockTime==server_status['globalLock']['lockTime']:
+                value=0.0
+            else:
+                value=float (server_status['globalLock']['lockTime'] - self.lockTime) *100.0 / float(server_status['globalLock']['totalTime'] - self.lockTotalTime ) 
+            #collectd.warning( "Submitting value %d " % value)
+            self.submit('percent', 'lock_ratio', value)
+
+
+        self.lockTotalTime=server_status['globalLock']['totalTime']
+        self.lockTime=server_status['globalLock']['lockTime']
+
 
         # indexes
         accesses = server_status['indexCounters']['btree']['accesses']
