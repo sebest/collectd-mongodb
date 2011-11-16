@@ -52,17 +52,14 @@ class MongoDB(object):
 
         # locks
         if self.lockTotalTime is not None and self.lockTime is not None:
-            #collectd.warning( "total %d - %d / %d - %d " % (server_status['globalLock']['totalTime'], self.lockTotalTime, server_status['globalLock']['totalTime'], self.lockTime))
-            if self.lockTime==server_status['globalLock']['lockTime']:
-                value=0.0
+            if self.lockTime == server_status['globalLock']['lockTime']:
+                value = 0.0
             else:
-                value=float (server_status['globalLock']['lockTime'] - self.lockTime) *100.0 / float(server_status['globalLock']['totalTime'] - self.lockTotalTime ) 
-            #collectd.warning( "Submitting value %d " % value)
+                value = float(server_status['globalLock']['lockTime'] - self.lockTime) * 100.0 / float(server_status['globalLock']['totalTime'] - self.lockTotalTime)
             self.submit('percent', 'lock_ratio', value)
 
-
-        self.lockTotalTime=server_status['globalLock']['totalTime']
-        self.lockTime=server_status['globalLock']['lockTime']
+        self.lockTotalTime = server_status['globalLock']['totalTime']
+        self.lockTime = server_status['globalLock']['lockTime']
 
 
         # indexes
