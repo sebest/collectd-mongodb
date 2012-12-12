@@ -18,6 +18,8 @@ class MongoDB(object):
 
         self.lockTotalTime = None
         self.lockTime = None
+        self.accesses = None
+        self.misses = None
 
     def submit(self, type, instance, value, db=None):
         if db:
@@ -63,12 +65,21 @@ class MongoDB(object):
 
 
         # indexes
-        accesses = server_status['indexCounters']['btree']['accesses']
-        misses = server_status['indexCounters']['btree']['misses']
-        if misses:
-            self.submit('cache_ratio', 'cache_misses', accesses / float(misses))
+        accesses = None
+        misses = None
+        if self.accesses is not None:
+            accesses = server_status['indexCounters']['btree']['accesses'] - self.accesses
+            if accesses < 0:
+                accesses = None
+        misses = (server_status['indexCounters']['btree']['misses'] or 0) - (self.misses or 0)
+        if misses < 0:
+            misses = None
+        if accesses and misses is not None:
+            self.submit('cache_ratio', 'cache_misses', int(misses * 100 / float(accesses)))
         else:
             self.submit('cache_ratio', 'cache_misses', 0)
+        self.accesses = server_status['indexCounters']['btree']['accesses']
+        self.misses = server_status['indexCounters']['btree']['misses']
 
         for mongo_db in self.mongo_db:
             db = con[mongo_db]
