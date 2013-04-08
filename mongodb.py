@@ -4,6 +4,7 @@
 
 import collectd
 from pymongo import Connection
+from distutils.version import StrictVersion as V
 
 
 class MongoDB(object):
@@ -41,6 +42,9 @@ class MongoDB(object):
             db.authenticate(self.mongo_user, self.mongo_password)
         server_status = db.command('serverStatus')
 
+        version = server_status['version']
+        at_least_2_4 = V(version) >= V('2.4.0')
+
         # operations
         for k, v in server_status['opcounters'].items():
             self.submit('total_operations', k, v)
@@ -63,23 +67,24 @@ class MongoDB(object):
         self.lockTotalTime = server_status['globalLock']['totalTime']
         self.lockTime = server_status['globalLock']['lockTime']
 
-
         # indexes
         accesses = None
         misses = None
+        index_counters = server_status['indexCounters'] if at_least_2_4 else server_status['indexCounters']['btree']
+
         if self.accesses is not None:
-            accesses = server_status['indexCounters']['btree']['accesses'] - self.accesses
+            accesses = index_counters['accesses'] - self.accesses
             if accesses < 0:
                 accesses = None
-        misses = (server_status['indexCounters']['btree']['misses'] or 0) - (self.misses or 0)
+        misses = (index_counters['misses'] or 0) - (self.misses or 0)
         if misses < 0:
             misses = None
         if accesses and misses is not None:
             self.submit('cache_ratio', 'cache_misses', int(misses * 100 / float(accesses)))
         else:
             self.submit('cache_ratio', 'cache_misses', 0)
-        self.accesses = server_status['indexCounters']['btree']['accesses']
-        self.misses = server_status['indexCounters']['btree']['misses']
+        self.accesses = index_counters['accesses']
+        self.misses = index_counters['misses']
 
         for mongo_db in self.mongo_db:
             db = con[mongo_db]
