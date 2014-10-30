@@ -39,3 +39,13 @@ The following is an example Collectd configuration for this plugin:
     </Plugin>
 
 The data-sets in types.db need to be added to the types.db file given by the collectd.conf TypesDB directive. See the types.db(5) man page for more information.
+
+If you're monitoring a secured MongoDB deployment, declaring a user with minimal read-only roles is a good practice, such as : 
+
+
+    db.createUser( {
+      user: "collectd",
+      pwd: "collectd",
+      roles: [ { role: "readAnyDatabase", db: "admin" }, { role: "clusterMonitor", db: "admin" } ]
+    });
+ 
