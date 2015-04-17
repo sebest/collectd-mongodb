@@ -89,7 +89,7 @@ class MongoDB(object):
         for mongo_db in self.mongo_db:
             db = con[mongo_db]
             if self.mongo_user and self.mongo_password:
-                db.authenticate(self.mongo_user, self.mongo_password)
+                con[self.mongo_db[0]].authenticate(self.mongo_user, self.mongo_password)
             db_stats = db.command('dbstats')
 
             # stats counts
