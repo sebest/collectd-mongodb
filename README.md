@@ -18,7 +18,7 @@ The plugin has some configuration options even though none are mandatory. This i
 * Password - the password for authentication
 * Host - hostname or IP address of the mongodb server defaults to 127.0.0.1
 * Port - the port of the mongodb server defaults to 27017
-* Database - the databases you want to monitor defaults to "admin". You can provide more than one database.
+* Database - the databases you want to monitor defaults to "admin". You can provide more than one database. Note that the first database _must_ be "admin", as it is used to perform a serverStatus()
 
 The following is an example Collectd configuration for this plugin:
 
@@ -39,3 +39,13 @@ The following is an example Collectd configuration for this plugin:
     </Plugin>
 
 The data-sets in types.db need to be added to the types.db file given by the collectd.conf TypesDB directive. See the types.db(5) man page for more information.
+
+If you're monitoring a secured MongoDB deployment, declaring a user with minimal read-only roles is a good practice, such as : 
+
+
+    db.createUser( {
+      user: "collectd",
+      pwd: "collectd",
+      roles: [ { role: "readAnyDatabase", db: "admin" }, { role: "clusterMonitor", db: "admin" } ]
+    });
+ 
