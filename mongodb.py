@@ -54,37 +54,48 @@ class MongoDB(object):
             self.submit('memory', t, server_status['mem'][t])
 
         # connections
-        self.submit('connections', 'connections', server_status['connections']['current'])
+        self.submit('connections', 'current', server_status['connections']['current'])
+	if 'available' in server_status['connections']:
+            self.submit('connections', 'available', server_status['connections']['available'])
+	if 'totalCreated' in server_status['connections']:
+            self.submit('connections', 'totalCreated', server_status['connections']['totalCreated'])
+
+	# network
+	if 'network' in server_status:
+	    for t in ['bytesIn', 'bytesOut', 'numRequests']:
+                self.submit('bytes', t, server_status['network'][t])
 
         # locks
-        if self.lockTotalTime is not None and self.lockTime is not None:
-            if self.lockTime == server_status['globalLock']['lockTime']:
-                value = 0.0
-            else:
-                value = float(server_status['globalLock']['lockTime'] - self.lockTime) * 100.0 / float(server_status['globalLock']['totalTime'] - self.lockTotalTime)
-            self.submit('percent', 'lock_ratio', value)
+	if 'lockTime' in server_status['globalLock']:
+            if self.lockTotalTime is not None and self.lockTime is not None:
+                if self.lockTime == server_status['globalLock']['lockTime']:
+                    value = 0.0
+                else:
+                    value = float(server_status['globalLock']['lockTime'] - self.lockTime) * 100.0 / float(server_status['globalLock']['totalTime'] - self.lockTotalTime)
+                self.submit('percent', 'lock_ratio', value)
 
+            self.lockTime = server_status['globalLock']['lockTime']
         self.lockTotalTime = server_status['globalLock']['totalTime']
-        self.lockTime = server_status['globalLock']['lockTime']
 
         # indexes
-        accesses = None
-        misses = None
-        index_counters = server_status['indexCounters'] if at_least_2_4 else server_status['indexCounters']['btree']
-
-        if self.accesses is not None:
-            accesses = index_counters['accesses'] - self.accesses
-            if accesses < 0:
-                accesses = None
-        misses = (index_counters['misses'] or 0) - (self.misses or 0)
-        if misses < 0:
+	if 'indexCounters' in server_status:
+            accesses = None
             misses = None
-        if accesses and misses is not None:
-            self.submit('cache_ratio', 'cache_misses', int(misses * 100 / float(accesses)))
-        else:
-            self.submit('cache_ratio', 'cache_misses', 0)
-        self.accesses = index_counters['accesses']
-        self.misses = index_counters['misses']
+            index_counters = server_status['indexCounters'] if at_least_2_4 else server_status['indexCounters']['btree']
+
+            if self.accesses is not None:
+                accesses = index_counters['accesses'] - self.accesses
+                if accesses < 0:
+                    accesses = None
+            misses = (index_counters['misses'] or 0) - (self.misses or 0)
+            if misses < 0:
+                misses = None
+            if accesses and misses is not None:
+                self.submit('cache_ratio', 'cache_misses', int(misses * 100 / float(accesses)))
+            else:
+                self.submit('cache_ratio', 'cache_misses', 0)
+            self.accesses = index_counters['accesses']
+            self.misses = index_counters['misses']
 
         for mongo_db in self.mongo_db:
             db = con[mongo_db]
