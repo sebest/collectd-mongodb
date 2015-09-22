@@ -3,7 +3,8 @@
 #
 
 import collectd
-from pymongo import Connection
+from pymongo import MongoClient
+from pymongo.read_preferences import ReadPreference
 from distutils.version import StrictVersion as V
 
 
@@ -36,7 +37,7 @@ class MongoDB(object):
         v.dispatch()
 
     def do_server_status(self):
-        con = Connection(host=self.mongo_host, port=self.mongo_port, slave_okay=True)
+        con = MongoClient(host=self.mongo_host, port=self.mongo_port, read_preference=ReadPreference.SECONDARY)
         db = con[self.mongo_db[0]]
         if self.mongo_user and self.mongo_password:
             db.authenticate(self.mongo_user, self.mongo_password)
