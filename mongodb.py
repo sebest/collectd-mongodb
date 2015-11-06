@@ -115,7 +115,7 @@ class MongoDB(object):
             self.submit('file_size', 'index', db_stats['indexSize'], mongo_db)
             self.submit('file_size', 'data', db_stats['dataSize'], mongo_db)
 
-        con.disconnect()
+        con.close()
 
     def config(self, obj):
         for node in obj.children:
