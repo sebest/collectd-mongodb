@@ -36,7 +36,7 @@ class MongoDB(object):
         v.values = [value, ]
         v.dispatch()
 
-    def do_server_status(self):
+    def get_db_and_collection_stats(self):
         con = MongoClient(host=self.mongo_host, port=self.mongo_port, read_preference=ReadPreference.SECONDARY)
         db = con[self.mongo_db[0]]
         if self.mongo_user and self.mongo_password:
@@ -56,18 +56,18 @@ class MongoDB(object):
 
         # connections
         self.submit('connections', 'current', server_status['connections']['current'])
-	if 'available' in server_status['connections']:
+        if 'available' in server_status['connections']:
             self.submit('connections', 'available', server_status['connections']['available'])
-	if 'totalCreated' in server_status['connections']:
+        if 'totalCreated' in server_status['connections']:
             self.submit('connections', 'totalCreated', server_status['connections']['totalCreated'])
 
-	# network
-	if 'network' in server_status:
-	    for t in ['bytesIn', 'bytesOut', 'numRequests']:
-                self.submit('bytes', t, server_status['network'][t])
+        # network
+        if 'network' in server_status:
+            for t in ['bytesIn', 'bytesOut', 'numRequests']:
+                      self.submit('bytes', t, server_status['network'][t])
 
         # locks
-	if 'lockTime' in server_status['globalLock']:
+        if 'lockTime' in server_status['globalLock']:
             if self.lockTotalTime is not None and self.lockTime is not None:
                 if self.lockTime == server_status['globalLock']['lockTime']:
                     value = 0.0
@@ -79,7 +79,7 @@ class MongoDB(object):
         self.lockTotalTime = server_status['globalLock']['totalTime']
 
         # indexes
-	if 'indexCounters' in server_status:
+        if 'indexCounters' in server_status:
             accesses = None
             misses = None
             index_counters = server_status['indexCounters'] if at_least_2_4 else server_status['indexCounters']['btree']
@@ -115,6 +115,15 @@ class MongoDB(object):
             self.submit('file_size', 'index', db_stats['indexSize'], mongo_db)
             self.submit('file_size', 'data', db_stats['dataSize'], mongo_db)
 
+            # collection stats
+            collections = db.collection_names()
+            for collection in collections:
+                collection_stats = db.command('collstats', collection)
+                if 'wiredTiger' in collection_stats:
+                    if 'cursor' in collection_stats['wiredTiger']:
+                        for k, v in collection_stats['wiredTiger']['cursor'].items():
+                            self.submit('collection_stats', (collection + '-' + k), v, mongo_db)
+
         con.close()
 
     def config(self, obj):
@@ -133,5 +142,5 @@ class MongoDB(object):
                 collectd.warning("mongodb plugin: Unkown configuration key %s" % node.key)
 
 mongodb = MongoDB()
-collectd.register_read(mongodb.do_server_status)
+collectd.register_read(mongodb.get_db_and_collection_stats)
 collectd.register_config(mongodb.config)
