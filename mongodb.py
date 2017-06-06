@@ -64,7 +64,7 @@ class MongoDB(object):
         # network
         if 'network' in server_status:
             for t in ['bytesIn', 'bytesOut', 'numRequests']:
-                      self.submit('bytes', t, server_status['network'][t])
+                self.submit('bytes', t, server_status['network'][t])
 
         # locks
         if 'lockTime' in server_status['globalLock']:
